@@ -1,0 +1,12 @@
+{
+  "name": "rocketlog",
+  "version": "0.1.0",
+  "description": "Move console to terminal",
+  "main": "lib/rocketlog.js",
+  "bin": "bin/rocketlog",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Randy Lu <randypriv@gmail.com>",
+  "license": "MIT"
+}
