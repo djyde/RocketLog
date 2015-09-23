@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+
+var rocket = require('http').createServer();
+var io = require('socket.io')(rocket);
+
+rocket.listen(2333);
+
+console.log('Rocket up!')
+
+io.on('connection', function(socket){
+  socket.on('rocket', function(data){
+    console.log(data);
+  })
+})
