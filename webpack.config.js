@@ -1,7 +1,7 @@
 module.exports = {
   entry: './lib/rocketlog.js',
   output: {
-    path: 'build',
+    path: 'dist',
     filename: 'rocketlog.dist.js'
   }
 }
