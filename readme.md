@@ -1,8 +1,6 @@
-# RocketLog
+# RocketLog (WIP)
 
 Bring console.log to terminal.
-
-**WIP**
 
 # Screenshot
 
