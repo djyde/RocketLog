@@ -2,13 +2,21 @@
 
 var rocket = require('http').createServer();
 var io = require('socket.io')(rocket);
+var colors = require('colors');
 
 rocket.listen(2333);
 
 console.log('Rocket up!')
 
+var pattle = {
+  log: 'white',
+  warn: 'yellow',
+  error: 'red',
+  info: 'blue'
+}
+
 io.on('connection', function(socket){
   socket.on('rocket', function(data){
-    console.log(data.msg);
+    console.log(colors[pattle[data.type]](data.msg));
   })
 })
