@@ -23,12 +23,22 @@ $ npm install rocketlog
 ```
 
 ```javascript
-require('rocketlog');
+const Rocket = require('rocketlog');
 ```
 
 # Usage
 
-Now you can run `$ rocketlog` and use `console.log()` in your script, log data will be shown on terminal.
+```javascript
+Rocket.log('This is log')
+Rocket.error('This is error')
+Rocket.warn('This is warn')
+```
+
+# Notes
+
+- You should remove the whole `rocketlog.js` in production environment without worring about the `Rocket.log()` not work. It will work when there is no `RocketLog` as `console.log()`.
+
+- Connecting to socket server needs some time. So the faster console before connecting to socket server will not display on terminal.
 
 # License
 

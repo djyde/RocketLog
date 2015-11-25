@@ -1,6 +1,6 @@
 {
   "name": "rocketlog",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Move console to terminal",
   "main": "lib/rocketlog.js",
   "bin": "bin/rocketlog",
