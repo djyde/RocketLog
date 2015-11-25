@@ -1,10 +1,10 @@
 # RocketLog (WIP)
 
-Bring console.log to terminal.
+Bring console.log to terminal. Say goodbye to 'The console had gone before I opening the dev tool!'.
 
 # Screenshot
 
-![](http://ww4.sinaimg.cn/large/62580dd9gw1ewcmmg4x75g20t30b2q9m.gif)
+![](http://ww4.sinaimg.cn/large/62580dd9gw1eydkgp2k8zj20bd0c575h.jpg)
 
 # Install
 
