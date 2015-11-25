@@ -1,4 +1,4 @@
-# RocketLog (WIP)
+# RocketLog
 
 Bring console.log to terminal. Say goodbye to 'The console had gone before I opening the dev tool!'.
 
