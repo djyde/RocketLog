@@ -6,9 +6,11 @@
 </head>
 <body>
   <script type="text/javascript">
-    setInterval(function(){
-      console.log('Rocket!');
-    },1000)
+    setTimeout(function(){
+      Rocket.log('This is log')
+      Rocket.error('This is error')
+      Rocket.warn('This is warn')
+    }, 2000)
   </script>
 </body>
 </html>

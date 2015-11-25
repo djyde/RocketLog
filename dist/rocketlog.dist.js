@@ -1,4 +1,14 @@
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["Rocket"] = factory();
+	else
+		root["Rocket"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 
@@ -44,29 +54,67 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var io = __webpack_require__(1);
-	var RocketLog = io('http://localhost:2333');
+	'use strict';
 
+	var _socket = __webpack_require__(1);
 
-	RocketLog.on('connect', function(){
-	  console.log('RocketLog connected!');
-	  
-	  var windowConsole = window.console;
-	  var rocketConsole = {};
+	var _socket2 = _interopRequireDefault(_socket);
 
-	  rocketConsole.log = function(data){
-	    windowConsole.log(data);
-	    RocketLog.emit('rocket', data);
-	  }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	  window.console = rocketConsole;
-	})
+	var RocketLog = (0, _socket2.default)('http://localhost:2333');
 
-	RocketLog.on('connect_error', function(){
-	  console.log('Unable to connect RocketLog!');
+	var connected = false;
+
+	RocketLog.on('connect', function () {
+
+	  connected = true;
+	  RocketLog.emit('rocket', {
+	    type: 'log',
+	    msg: 'Client connected'
+	  });
+
+	  Rocket.log('Rocket cliet connect!');
+	});
+
+	RocketLog.on('connect_error', function () {
+	  console.warn('Unable to connect RocketLog!');
 	  RocketLog.disconnect();
-	})
+	});
 
+	var channel = 'rocket';
+
+	var Rocket = {
+	  log: function log(msg) {
+	    console.log(msg);
+	    if (connected) {
+	      RocketLog.emit(channel, {
+	        type: 'log',
+	        msg: msg
+	      });
+	    };
+	  },
+	  warn: function warn(msg) {
+	    console.warn(msg);
+	    if (connected) {
+	      RocketLog.emit(channel, {
+	        type: 'warn',
+	        msg: msg
+	      });
+	    }
+	  },
+	  error: function error(msg) {
+	    console.error(msg);
+	    if (connected) {
+	      RocketLog.emit(channel, {
+	        type: 'error',
+	        msg: msg
+	      });
+	    }
+	  }
+	};
+
+	module.exports = Rocket;
 
 /***/ },
 /* 1 */
@@ -85,10 +133,10 @@
 	 * Module dependencies.
 	 */
 
-	var url = __webpack_require__(4);
+	var url = __webpack_require__(3);
 	var parser = __webpack_require__(6);
 	var Manager = __webpack_require__(13);
-	var debug = __webpack_require__(3)('socket.io-client');
+	var debug = __webpack_require__(5)('socket.io-client');
 
 	/**
 	 * Module exports.
@@ -171,6 +219,117 @@
 
 /***/ },
 /* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {
+	/**
+	 * Module dependencies.
+	 */
+
+	var parseuri = __webpack_require__(4);
+	var debug = __webpack_require__(5)('socket.io-client:url');
+
+	/**
+	 * Module exports.
+	 */
+
+	module.exports = url;
+
+	/**
+	 * URL parser.
+	 *
+	 * @param {String} url
+	 * @param {Object} An object meant to mimic window.location.
+	 *                 Defaults to window.location.
+	 * @api public
+	 */
+
+	function url(uri, loc){
+	  var obj = uri;
+
+	  // default to window.location
+	  var loc = loc || global.location;
+	  if (null == uri) uri = loc.protocol + '//' + loc.host;
+
+	  // relative path support
+	  if ('string' == typeof uri) {
+	    if ('/' == uri.charAt(0)) {
+	      if ('/' == uri.charAt(1)) {
+	        uri = loc.protocol + uri;
+	      } else {
+	        uri = loc.hostname + uri;
+	      }
+	    }
+
+	    if (!/^(https?|wss?):\/\//.test(uri)) {
+	      debug('protocol-less url %s', uri);
+	      if ('undefined' != typeof loc) {
+	        uri = loc.protocol + '//' + uri;
+	      } else {
+	        uri = 'https://' + uri;
+	      }
+	    }
+
+	    // parse
+	    debug('parse %s', uri);
+	    obj = parseuri(uri);
+	  }
+
+	  // make sure we treat `localhost:80` and `localhost` equally
+	  if (!obj.port) {
+	    if (/^(http|ws)$/.test(obj.protocol)) {
+	      obj.port = '80';
+	    }
+	    else if (/^(http|ws)s$/.test(obj.protocol)) {
+	      obj.port = '443';
+	    }
+	  }
+
+	  obj.path = obj.path || '/';
+
+	  // define unique id
+	  obj.id = obj.protocol + '://' + obj.host + ':' + obj.port;
+	  // define href
+	  obj.href = obj.protocol + '://' + obj.host + (loc && loc.port == obj.port ? '' : (':' + obj.port));
+
+	  return obj;
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	/**
+	 * Parses an URI
+	 *
+	 * @author Steven Levithan <stevenlevithan.com> (MIT license)
+	 * @api private
+	 */
+
+	var re = /^(?:(?![^:@]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
+
+	var parts = [
+	    'source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host'
+	  , 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'
+	];
+
+	module.exports = function parseuri(str) {
+	  var m = re.exec(str || '')
+	    , uri = {}
+	    , i = 14;
+
+	  while (i--) {
+	    uri[parts[i]] = m[i] || '';
+	  }
+
+	  return uri;
+	};
+
+
+/***/ },
+/* 5 */
 /***/ function(module, exports) {
 
 	
@@ -313,117 +472,6 @@
 
 
 /***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {
-	/**
-	 * Module dependencies.
-	 */
-
-	var parseuri = __webpack_require__(5);
-	var debug = __webpack_require__(3)('socket.io-client:url');
-
-	/**
-	 * Module exports.
-	 */
-
-	module.exports = url;
-
-	/**
-	 * URL parser.
-	 *
-	 * @param {String} url
-	 * @param {Object} An object meant to mimic window.location.
-	 *                 Defaults to window.location.
-	 * @api public
-	 */
-
-	function url(uri, loc){
-	  var obj = uri;
-
-	  // default to window.location
-	  var loc = loc || global.location;
-	  if (null == uri) uri = loc.protocol + '//' + loc.host;
-
-	  // relative path support
-	  if ('string' == typeof uri) {
-	    if ('/' == uri.charAt(0)) {
-	      if ('/' == uri.charAt(1)) {
-	        uri = loc.protocol + uri;
-	      } else {
-	        uri = loc.hostname + uri;
-	      }
-	    }
-
-	    if (!/^(https?|wss?):\/\//.test(uri)) {
-	      debug('protocol-less url %s', uri);
-	      if ('undefined' != typeof loc) {
-	        uri = loc.protocol + '//' + uri;
-	      } else {
-	        uri = 'https://' + uri;
-	      }
-	    }
-
-	    // parse
-	    debug('parse %s', uri);
-	    obj = parseuri(uri);
-	  }
-
-	  // make sure we treat `localhost:80` and `localhost` equally
-	  if (!obj.port) {
-	    if (/^(http|ws)$/.test(obj.protocol)) {
-	      obj.port = '80';
-	    }
-	    else if (/^(http|ws)s$/.test(obj.protocol)) {
-	      obj.port = '443';
-	    }
-	  }
-
-	  obj.path = obj.path || '/';
-
-	  // define unique id
-	  obj.id = obj.protocol + '://' + obj.host + ':' + obj.port;
-	  // define href
-	  obj.href = obj.protocol + '://' + obj.host + (loc && loc.port == obj.port ? '' : (':' + obj.port));
-
-	  return obj;
-	}
-
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	/**
-	 * Parses an URI
-	 *
-	 * @author Steven Levithan <stevenlevithan.com> (MIT license)
-	 * @api private
-	 */
-
-	var re = /^(?:(?![^:@]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
-
-	var parts = [
-	    'source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host'
-	  , 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'
-	];
-
-	module.exports = function parseuri(str) {
-	  var m = re.exec(str || '')
-	    , uri = {}
-	    , i = 14;
-
-	  while (i--) {
-	    uri[parts[i]] = m[i] || '';
-	  }
-
-	  return uri;
-	};
-
-
-/***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -432,10 +480,10 @@
 	 * Module dependencies.
 	 */
 
-	var debug = __webpack_require__(3)('socket.io-parser');
-	var json = __webpack_require__(8);
-	var isArray = __webpack_require__(10);
-	var Emitter = __webpack_require__(7);
+	var debug = __webpack_require__(5)('socket.io-parser');
+	var json = __webpack_require__(7);
+	var isArray = __webpack_require__(9);
+	var Emitter = __webpack_require__(10);
 	var binary = __webpack_require__(11);
 	var isBuf = __webpack_require__(12);
 
@@ -831,176 +879,6 @@
 
 /***/ },
 /* 7 */
-/***/ function(module, exports) {
-
-	
-	/**
-	 * Expose `Emitter`.
-	 */
-
-	module.exports = Emitter;
-
-	/**
-	 * Initialize a new `Emitter`.
-	 *
-	 * @api public
-	 */
-
-	function Emitter(obj) {
-	  if (obj) return mixin(obj);
-	};
-
-	/**
-	 * Mixin the emitter properties.
-	 *
-	 * @param {Object} obj
-	 * @return {Object}
-	 * @api private
-	 */
-
-	function mixin(obj) {
-	  for (var key in Emitter.prototype) {
-	    obj[key] = Emitter.prototype[key];
-	  }
-	  return obj;
-	}
-
-	/**
-	 * Listen on the given `event` with `fn`.
-	 *
-	 * @param {String} event
-	 * @param {Function} fn
-	 * @return {Emitter}
-	 * @api public
-	 */
-
-	Emitter.prototype.on =
-	Emitter.prototype.addEventListener = function(event, fn){
-	  this._callbacks = this._callbacks || {};
-	  (this._callbacks[event] = this._callbacks[event] || [])
-	    .push(fn);
-	  return this;
-	};
-
-	/**
-	 * Adds an `event` listener that will be invoked a single
-	 * time then automatically removed.
-	 *
-	 * @param {String} event
-	 * @param {Function} fn
-	 * @return {Emitter}
-	 * @api public
-	 */
-
-	Emitter.prototype.once = function(event, fn){
-	  var self = this;
-	  this._callbacks = this._callbacks || {};
-
-	  function on() {
-	    self.off(event, on);
-	    fn.apply(this, arguments);
-	  }
-
-	  on.fn = fn;
-	  this.on(event, on);
-	  return this;
-	};
-
-	/**
-	 * Remove the given callback for `event` or all
-	 * registered callbacks.
-	 *
-	 * @param {String} event
-	 * @param {Function} fn
-	 * @return {Emitter}
-	 * @api public
-	 */
-
-	Emitter.prototype.off =
-	Emitter.prototype.removeListener =
-	Emitter.prototype.removeAllListeners =
-	Emitter.prototype.removeEventListener = function(event, fn){
-	  this._callbacks = this._callbacks || {};
-
-	  // all
-	  if (0 == arguments.length) {
-	    this._callbacks = {};
-	    return this;
-	  }
-
-	  // specific event
-	  var callbacks = this._callbacks[event];
-	  if (!callbacks) return this;
-
-	  // remove all handlers
-	  if (1 == arguments.length) {
-	    delete this._callbacks[event];
-	    return this;
-	  }
-
-	  // remove specific handler
-	  var cb;
-	  for (var i = 0; i < callbacks.length; i++) {
-	    cb = callbacks[i];
-	    if (cb === fn || cb.fn === fn) {
-	      callbacks.splice(i, 1);
-	      break;
-	    }
-	  }
-	  return this;
-	};
-
-	/**
-	 * Emit `event` with the given args.
-	 *
-	 * @param {String} event
-	 * @param {Mixed} ...
-	 * @return {Emitter}
-	 */
-
-	Emitter.prototype.emit = function(event){
-	  this._callbacks = this._callbacks || {};
-	  var args = [].slice.call(arguments, 1)
-	    , callbacks = this._callbacks[event];
-
-	  if (callbacks) {
-	    callbacks = callbacks.slice(0);
-	    for (var i = 0, len = callbacks.length; i < len; ++i) {
-	      callbacks[i].apply(this, args);
-	    }
-	  }
-
-	  return this;
-	};
-
-	/**
-	 * Return array of callbacks for `event`.
-	 *
-	 * @param {String} event
-	 * @return {Array}
-	 * @api public
-	 */
-
-	Emitter.prototype.listeners = function(event){
-	  this._callbacks = this._callbacks || {};
-	  return this._callbacks[event] || [];
-	};
-
-	/**
-	 * Check if this emitter has `event` handlers.
-	 *
-	 * @param {String} event
-	 * @return {Boolean}
-	 * @api public
-	 */
-
-	Emitter.prototype.hasListeners = function(event){
-	  return !! this.listeners(event).length;
-	};
-
-
-/***/ },
-/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/*! JSON v3.2.6 | http://bestiejs.github.io/json3 | Copyright 2012-2013, Kit Cambridge | http://kit.mit-license.org */
@@ -1010,7 +888,7 @@
 
 	  // Detect the `define` function exposed by asynchronous module loaders. The
 	  // strict `define` check is necessary for compatibility with `r.js`.
-	  var isLoader = "function" === "function" && __webpack_require__(9);
+	  var isLoader = "function" === "function" && __webpack_require__(8);
 
 	  // Detect native implementations.
 	  var nativeJSON = typeof JSON == "object" && JSON;
@@ -1867,7 +1745,7 @@
 
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
@@ -1875,11 +1753,181 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
 	  return Object.prototype.toString.call(arr) == '[object Array]';
+	};
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	
+	/**
+	 * Expose `Emitter`.
+	 */
+
+	module.exports = Emitter;
+
+	/**
+	 * Initialize a new `Emitter`.
+	 *
+	 * @api public
+	 */
+
+	function Emitter(obj) {
+	  if (obj) return mixin(obj);
+	};
+
+	/**
+	 * Mixin the emitter properties.
+	 *
+	 * @param {Object} obj
+	 * @return {Object}
+	 * @api private
+	 */
+
+	function mixin(obj) {
+	  for (var key in Emitter.prototype) {
+	    obj[key] = Emitter.prototype[key];
+	  }
+	  return obj;
+	}
+
+	/**
+	 * Listen on the given `event` with `fn`.
+	 *
+	 * @param {String} event
+	 * @param {Function} fn
+	 * @return {Emitter}
+	 * @api public
+	 */
+
+	Emitter.prototype.on =
+	Emitter.prototype.addEventListener = function(event, fn){
+	  this._callbacks = this._callbacks || {};
+	  (this._callbacks[event] = this._callbacks[event] || [])
+	    .push(fn);
+	  return this;
+	};
+
+	/**
+	 * Adds an `event` listener that will be invoked a single
+	 * time then automatically removed.
+	 *
+	 * @param {String} event
+	 * @param {Function} fn
+	 * @return {Emitter}
+	 * @api public
+	 */
+
+	Emitter.prototype.once = function(event, fn){
+	  var self = this;
+	  this._callbacks = this._callbacks || {};
+
+	  function on() {
+	    self.off(event, on);
+	    fn.apply(this, arguments);
+	  }
+
+	  on.fn = fn;
+	  this.on(event, on);
+	  return this;
+	};
+
+	/**
+	 * Remove the given callback for `event` or all
+	 * registered callbacks.
+	 *
+	 * @param {String} event
+	 * @param {Function} fn
+	 * @return {Emitter}
+	 * @api public
+	 */
+
+	Emitter.prototype.off =
+	Emitter.prototype.removeListener =
+	Emitter.prototype.removeAllListeners =
+	Emitter.prototype.removeEventListener = function(event, fn){
+	  this._callbacks = this._callbacks || {};
+
+	  // all
+	  if (0 == arguments.length) {
+	    this._callbacks = {};
+	    return this;
+	  }
+
+	  // specific event
+	  var callbacks = this._callbacks[event];
+	  if (!callbacks) return this;
+
+	  // remove all handlers
+	  if (1 == arguments.length) {
+	    delete this._callbacks[event];
+	    return this;
+	  }
+
+	  // remove specific handler
+	  var cb;
+	  for (var i = 0; i < callbacks.length; i++) {
+	    cb = callbacks[i];
+	    if (cb === fn || cb.fn === fn) {
+	      callbacks.splice(i, 1);
+	      break;
+	    }
+	  }
+	  return this;
+	};
+
+	/**
+	 * Emit `event` with the given args.
+	 *
+	 * @param {String} event
+	 * @param {Mixed} ...
+	 * @return {Emitter}
+	 */
+
+	Emitter.prototype.emit = function(event){
+	  this._callbacks = this._callbacks || {};
+	  var args = [].slice.call(arguments, 1)
+	    , callbacks = this._callbacks[event];
+
+	  if (callbacks) {
+	    callbacks = callbacks.slice(0);
+	    for (var i = 0, len = callbacks.length; i < len; ++i) {
+	      callbacks[i].apply(this, args);
+	    }
+	  }
+
+	  return this;
+	};
+
+	/**
+	 * Return array of callbacks for `event`.
+	 *
+	 * @param {String} event
+	 * @return {Array}
+	 * @api public
+	 */
+
+	Emitter.prototype.listeners = function(event){
+	  this._callbacks = this._callbacks || {};
+	  return this._callbacks[event] || [];
+	};
+
+	/**
+	 * Check if this emitter has `event` handlers.
+	 *
+	 * @param {String} event
+	 * @return {Boolean}
+	 * @api public
+	 */
+
+	Emitter.prototype.hasListeners = function(event){
+	  return !! this.listeners(event).length;
 	};
 
 
@@ -1893,7 +1941,7 @@
 	 * Module requirements
 	 */
 
-	var isArray = __webpack_require__(10);
+	var isArray = __webpack_require__(9);
 	var isBuf = __webpack_require__(12);
 
 	/**
@@ -2060,15 +2108,15 @@
 	 * Module dependencies.
 	 */
 
-	var url = __webpack_require__(4);
+	var url = __webpack_require__(3);
 	var eio = __webpack_require__(14);
 	var Socket = __webpack_require__(45);
-	var Emitter = __webpack_require__(7);
+	var Emitter = __webpack_require__(10);
 	var parser = __webpack_require__(6);
 	var on = __webpack_require__(47);
 	var bind = __webpack_require__(48);
 	var object = __webpack_require__(49);
-	var debug = __webpack_require__(3)('socket.io-client:manager');
+	var debug = __webpack_require__(5)('socket.io-client:manager');
 	var indexOf = __webpack_require__(42);
 	var Backoff = __webpack_require__(50);
 
@@ -2581,7 +2629,7 @@
 	 * @api public
 	 *
 	 */
-	module.exports.parser = __webpack_require__(25);
+	module.exports.parser = __webpack_require__(24);
 
 
 /***/ },
@@ -2593,13 +2641,13 @@
 	 */
 
 	var transports = __webpack_require__(17);
-	var Emitter = __webpack_require__(7);
+	var Emitter = __webpack_require__(10);
 	var debug = __webpack_require__(36)('engine.io-client:socket');
 	var index = __webpack_require__(42);
-	var parser = __webpack_require__(25);
+	var parser = __webpack_require__(24);
 	var parseuri = __webpack_require__(43);
 	var parsejson = __webpack_require__(44);
-	var parseqs = __webpack_require__(35);
+	var parseqs = __webpack_require__(34);
 
 	/**
 	 * Module exports.
@@ -2714,9 +2762,9 @@
 	 */
 
 	Socket.Socket = Socket;
-	Socket.Transport = __webpack_require__(24);
+	Socket.Transport = __webpack_require__(23);
 	Socket.transports = __webpack_require__(17);
-	Socket.parser = __webpack_require__(25);
+	Socket.parser = __webpack_require__(24);
 
 	/**
 	 * Creates transport of the given type.
@@ -3451,8 +3499,8 @@
 
 	var XMLHttpRequest = __webpack_require__(18);
 	var Polling = __webpack_require__(22);
-	var Emitter = __webpack_require__(7);
-	var inherit = __webpack_require__(23);
+	var Emitter = __webpack_require__(10);
+	var inherit = __webpack_require__(35);
 	var debug = __webpack_require__(36)('engine.io-client:polling-xhr');
 
 	/**
@@ -3840,10 +3888,10 @@
 	 * Module dependencies.
 	 */
 
-	var Transport = __webpack_require__(24);
-	var parseqs = __webpack_require__(35);
-	var parser = __webpack_require__(25);
-	var inherit = __webpack_require__(23);
+	var Transport = __webpack_require__(23);
+	var parseqs = __webpack_require__(34);
+	var parser = __webpack_require__(24);
+	var inherit = __webpack_require__(35);
 	var debug = __webpack_require__(36)('engine.io-client:polling');
 
 	/**
@@ -4085,26 +4133,14 @@
 
 /***/ },
 /* 23 */
-/***/ function(module, exports) {
-
-	
-	module.exports = function(a, b){
-	  var fn = function(){};
-	  fn.prototype = b.prototype;
-	  a.prototype = new fn;
-	  a.prototype.constructor = a;
-	};
-
-/***/ },
-/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies.
 	 */
 
-	var parser = __webpack_require__(25);
-	var Emitter = __webpack_require__(7);
+	var parser = __webpack_require__(24);
+	var Emitter = __webpack_require__(10);
 
 	/**
 	 * Module exports.
@@ -4261,19 +4297,19 @@
 
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * Module dependencies.
 	 */
 
-	var keys = __webpack_require__(26);
-	var hasBinary = __webpack_require__(27);
-	var sliceBuffer = __webpack_require__(29);
-	var base64encoder = __webpack_require__(30);
-	var after = __webpack_require__(31);
-	var utf8 = __webpack_require__(32);
+	var keys = __webpack_require__(25);
+	var hasBinary = __webpack_require__(26);
+	var sliceBuffer = __webpack_require__(28);
+	var base64encoder = __webpack_require__(29);
+	var after = __webpack_require__(30);
+	var utf8 = __webpack_require__(31);
 
 	/**
 	 * Check if we are running an android browser. That requires us to use
@@ -4330,7 +4366,7 @@
 	 * Create a blob api even for blob builder when vendor prefixes exist
 	 */
 
-	var Blob = __webpack_require__(34);
+	var Blob = __webpack_require__(33);
 
 	/**
 	 * Encodes a packet.
@@ -4862,7 +4898,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports) {
 
 	
@@ -4887,7 +4923,7 @@
 
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -4895,7 +4931,7 @@
 	 * Module requirements.
 	 */
 
-	var isArray = __webpack_require__(28);
+	var isArray = __webpack_require__(27);
 
 	/**
 	 * Module exports.
@@ -4952,7 +4988,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
@@ -4961,7 +4997,7 @@
 
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports) {
 
 	/**
@@ -4996,7 +5032,7 @@
 
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports) {
 
 	/*
@@ -5061,7 +5097,7 @@
 
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports) {
 
 	module.exports = after
@@ -5095,7 +5131,7 @@
 
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! https://mths.be/utf8js v2.0.0 by @mathias */
@@ -5341,10 +5377,10 @@
 
 	}(this));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(33)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(32)(module), (function() { return this; }())))
 
 /***/ },
-/* 33 */
+/* 32 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -5360,7 +5396,7 @@
 
 
 /***/ },
-/* 34 */
+/* 33 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -5463,7 +5499,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 35 */
+/* 34 */
 /***/ function(module, exports) {
 
 	/**
@@ -5504,6 +5540,18 @@
 	  return qry;
 	};
 
+
+/***/ },
+/* 35 */
+/***/ function(module, exports) {
+
+	
+	module.exports = function(a, b){
+	  var fn = function(){};
+	  fn.prototype = b.prototype;
+	  a.prototype = new fn;
+	  a.prototype.constructor = a;
+	};
 
 /***/ },
 /* 36 */
@@ -5988,7 +6036,7 @@
 	 */
 
 	var Polling = __webpack_require__(22);
-	var inherit = __webpack_require__(23);
+	var inherit = __webpack_require__(35);
 
 	/**
 	 * Module exports.
@@ -6226,10 +6274,10 @@
 	 * Module dependencies.
 	 */
 
-	var Transport = __webpack_require__(24);
-	var parser = __webpack_require__(25);
-	var parseqs = __webpack_require__(35);
-	var inherit = __webpack_require__(23);
+	var Transport = __webpack_require__(23);
+	var parser = __webpack_require__(24);
+	var parseqs = __webpack_require__(34);
+	var inherit = __webpack_require__(35);
 	var debug = __webpack_require__(36)('engine.io-client:websocket');
 
 	/**
@@ -6619,12 +6667,12 @@
 	 */
 
 	var parser = __webpack_require__(6);
-	var Emitter = __webpack_require__(7);
+	var Emitter = __webpack_require__(10);
 	var toArray = __webpack_require__(46);
 	var on = __webpack_require__(47);
 	var bind = __webpack_require__(48);
-	var debug = __webpack_require__(3)('socket.io-client:socket');
-	var hasBin = __webpack_require__(27);
+	var debug = __webpack_require__(5)('socket.io-client:socket');
+	var hasBin = __webpack_require__(26);
 
 	/**
 	 * Module exports.
@@ -7259,4 +7307,6 @@
 
 
 /***/ }
-/******/ ]);
+/******/ ])
+});
+;

@@ -9,6 +9,6 @@ console.log('Rocket up!')
 
 io.on('connection', function(socket){
   socket.on('rocket', function(data){
-    console.log(data);
+    console.log(data.msg);
   })
 })
