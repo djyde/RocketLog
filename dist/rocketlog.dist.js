@@ -111,6 +111,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        msg: msg
 	      });
 	    }
+	  },
+	  info: function info(msg) {
+	    console.error(msg);
+	    if (connected) {
+	      RocketLog.emit(channel, {
+	        type: 'info',
+	        msg: msg
+	      });
+	    }
 	  }
 	};
 
