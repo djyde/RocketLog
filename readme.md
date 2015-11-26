@@ -1,5 +1,9 @@
 # RocketLog
 
+![](https://img.shields.io/david/djyde/RocketLog.svg)
+[![](https://img.shields.io/npm/dt/RocketLog.svg)](https://www.npmjs.com/package/rocketlog)
+[![npm](https://img.shields.io/npm/l/express.svg)](https://www.npmjs.com/package/rocketlog)
+
 Bring console.log to terminal. Say goodbye to 'The console had gone before I opening the dev tool!'.
 
 # Screenshot
